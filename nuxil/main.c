@@ -7,7 +7,7 @@ int main(void) {
   // Setup Timer for isr.
   // f_timer = (f_cpu / prescalar / counter), or f_timer = f_cpu / (prescalar * counter)
   //             1mhz /   1024   /   255 = 3,82 hz
-  OCR0A = 255;
+  OCR0A = 0xFF;
 
   // Waveform Generation Mode: CTC
   TCCR0A |= (1 << WGM01);
@@ -16,7 +16,9 @@ int main(void) {
   TIMSK0 |= (1<<OCIE0A);
 
   // clkI/O/1024 (From prescaler)
-  TCCR0B |= (1 << CS00) | (1 << CS02);
+  // TCCR0B |= (1 << CS02);
+  // TCCR0B |= (1 << CS00) | (1 << CS02);
+  TCCR0B |= (1 << CS00) | (1 << CS01);
 
   // Pin change interrupt
   GIMSK = (1 << PCIE);  // PCIE: Pin Change Interrupt Enable
@@ -39,14 +41,15 @@ int main(void) {
 
 ISR(TIM0_COMPA_vect) {
   counter++;
-  if(counter == 70 || counter == 72 || counter == 78) {
-    PORTB ^= (1<<PB0);
-  } else if(counter == 80) {
-    PORTB ^= (1<<PB0);
-    counter = 0;
+  if(counter == 1) {
+    PORTB |= (1<<PB0);
+  } else if(counter == 10) {
+    PORTB &= ~(1<<PB0);
   }
+  if(counter == 0xFF)
+    counter = 0;
 }
 
-ISR(PCINT0_vect) {
-  PORTB ^= (1<<PB2);
+ISR(TIM0_OVF_vect) {
+  counter = 0;
 }
